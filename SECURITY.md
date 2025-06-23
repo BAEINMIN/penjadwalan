@@ -1,21 +1,94 @@
-# Security Policy
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Penjadwalan SJF (Pekerjaan Terpendek Pertama)</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    table { margin: auto; border-collapse: collapse; width: 80%; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    input { width: 90%; padding: 5px; }
+    button { padding: 6px 12px; margin: 5px; }
+  </style>
+</head>
+<body>
 
-## Supported Versions
+<h2>Penjadwalan SJF (Pekerjaan Terpendek Pertama)</h2>
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+<h3>Masukan Proses</h3>
+<table id="prosesTable">
+  <thead>
+    <tr>
+      <th>Proses</th>
+      <th>Waktu Kedatangan</th>
+      <th>Waktu Burst</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="prosesBody">
+    <!-- Baris proses akan ditambahkan di sini -->
+  </tbody>
+</table>
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+<button onclick="tambahProses()">Tambah Proses</button>
+<button onclick="hitungSJF()">Hitung SJF</button>
 
-## Reporting a Vulnerability
+<script>
+let prosesCounter = 1;
 
-Use this section to tell people how to report a vulnerability.
+function tambahProses() {
+  const tbody = document.getElementById("prosesBody");
+  const row = tbody.insertRow();
+  row.innerHTML = `
+    <td>Halaman ${prosesCounter++}</td>
+    <td><input type="number" class="arrival" /></td>
+    <td><input type="number" class="burst" /></td>
+    <td><button onclick="hapusBaris(this)">Hapus</button></td>
+  `;
+}
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+function hapusBaris(button) {
+  const row = button.parentElement.parentElement;
+  row.remove();
+}
+
+function hitungSJF() {
+  const rows = document.querySelectorAll("#prosesBody tr");
+  let prosesList = [];
+
+  rows.forEach((row, index) => {
+    const arrival = parseInt(row.querySelector(".arrival").value);
+    const burst = parseInt(row.querySelector(".burst").value);
+    if (!isNaN(arrival) && !isNaN(burst)) {
+      prosesList.push({ id: index + 1, arrival, burst });
+    }
+  });
+
+  // SJF Non-Preemptive: urutkan berdasarkan waktu datang, lalu burst terpendek
+  let time = 0;
+  let result = [];
+  while (prosesList.length > 0) {
+    let tersedia = prosesList.filter(p => p.arrival <= time);
+    if (tersedia.length === 0) {
+      time++;
+      continue;
+    }
+    tersedia.sort((a, b) => a.burst - b.burst);
+    let proses = tersedia[0];
+    time += proses.burst;
+    result.push({
+      id: proses.id,
+      waktuMulai: time - proses.burst,
+      waktuSelesai: time,
+      turnaround: time - proses.arrival,
+      waiting: time - proses.arrival - proses.burst
+    });
+    prosesList = prosesList.filter(p => p !== proses);
+  }
+
+  console.log("Hasil Penjadwalan SJF:", result);
+  alert("Lihat hasil di konsol browser (F12 > Console)");
+}
+</script>
+
+</body>
+</html>
